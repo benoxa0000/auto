@@ -130,9 +130,11 @@ local TargetDropdown = FeedTab:CreateDropdown({
     MultipleOptions = false,
     Flag = "TargetUnitDropdown",
     Callback = function(option)
-        if option[1] then
-            selectedTargetName = labelToName(option[1])
-        end
+        pcall(function()
+            if type(option) == "table" and type(option[1]) == "string" then
+                selectedTargetName = labelToName(option[1])
+            end
+        end)
     end,
 })
 
@@ -154,17 +156,23 @@ local FodderDropdown = FeedTab:CreateDropdown({
     Callback = function(options)
         local names = {}
 
-        if options[1] ~= nil then
-            for _, label in ipairs(options) do
-                table.insert(names, labelToName(label))
-            end
-        else
-            for label, isSelected in pairs(options) do
-                if isSelected then
-                    table.insert(names, labelToName(label))
+        pcall(function()
+            if type(options) == "table" then
+                if options[1] ~= nil then
+                    for _, label in ipairs(options) do
+                        if type(label) == "string" then
+                            table.insert(names, labelToName(label))
+                        end
+                    end
+                else
+                    for label, isSelected in pairs(options) do
+                        if isSelected and type(label) == "string" then
+                            table.insert(names, labelToName(label))
+                        end
+                    end
                 end
             end
-        end
+        end)
 
         selectedFodderNames = names
     end,
@@ -184,10 +192,9 @@ FeedTab:CreateInput({
 -- ============================
 local function refreshDropdowns()
     loadUnitsData()
-    TargetDropdown:Refresh(getAllLabels(), false)
-    FodderDropdown:Refresh(getAllLabels(), false)
+    TargetDropdown:Refresh(getAllLabels(), true)
+    FodderDropdown:Refresh(getAllLabels(), true)
 
-    -- clear selections since data changed, forcing the user to pick again
     selectedTargetName = nil
     selectedFodderNames = {}
 end
